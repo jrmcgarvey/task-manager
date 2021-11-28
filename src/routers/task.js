@@ -23,6 +23,8 @@ router.post('/tasks', auth, async (req, res) => {
 router.get('/tasks', auth, async (req, res) => {
     const match = {}
     const sort = {}
+    const skip = 0
+    const limit = 0
 
     if (req.query.completed) {
         match.completed = req.query.completed === 'true'
@@ -32,19 +34,33 @@ router.get('/tasks', auth, async (req, res) => {
         const parts = req.query.sortBy.split(':')
         sort[parts[0]] = parts[1] === 'desc' ? -1 : 1
     }
-
+    if (req.query.skip) {
+       skip = parseInt(req.query.skip)
+       if (isNaN(skip) || skip < 0) {
+           skip = 0
+       }
+    }
+    if (req.query.limit) {
+        limit = parseInt(req.query.limit)
+        if (isNaN(limit) || limit < 0) {
+            limit = 0
+        }
+    }
     try {
         await req.user.populate({
             path: 'tasks',
             match,
             options: {
-                limit: parseInt(req.query.limit),
-                skip: parseInt(req.query.skip),
+             //   limit: parseInt(req.query.limit),
+            //    skip: parseInt(req.query.skip),
+                limit,
+                skip,
                 sort
             }
-        }).execPopulate()
+        })
         res.send(req.user.tasks)
     } catch (e) {
+        console.log(e)
         res.status(500).send()
     }
 })
